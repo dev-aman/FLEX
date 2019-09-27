@@ -1126,10 +1126,10 @@ static char const * const kFLEXRequestIDKey = "kFLEXRequestIDKey";
         return;
     }
     NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
-    if (httpResponse.allHeaderFields[@"warning"] == nil) {
+    NSString *warningMessage = (NSString *) httpResponse.allHeaderFields[@"warning"];
+    if (warningMessage == nil) {
         return;
     }
-    NSString *warningMessage = (NSString *) httpResponse.allHeaderFields[@"warning"];
     UIAlertController * alert = [UIAlertController alertControllerWithTitle : @"Warning"
                                                                     message : warningMessage
                                                              preferredStyle : UIAlertControllerStyleAlert];
