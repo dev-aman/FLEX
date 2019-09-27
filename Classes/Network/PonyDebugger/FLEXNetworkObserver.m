@@ -1122,26 +1122,28 @@ static char const * const kFLEXRequestIDKey = "kFLEXRequestIDKey";
 
 - (void)showToastForResponseWarningHeaderField: (NSURLResponse *)response
 {
-    if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
-        NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
-        if (httpResponse.allHeaderFields[@"warning"] != nil) {
-            NSString *warningMessage = (NSString *) httpResponse.allHeaderFields[@"warning"];
-            UIAlertController * alert = [UIAlertController alertControllerWithTitle : @"Warning"
-                                                                            message : warningMessage
-                                                                     preferredStyle : UIAlertControllerStyleAlert];
-            UIAlertAction * dismiss = [UIAlertAction
-                                       actionWithTitle:@"Dismiss"
-                                       style:UIAlertActionStyleDefault
-                                       handler:^(UIAlertAction * action)
-                                       { }];
-            
-            [alert addAction:dismiss];
-            dispatch_async(dispatch_get_main_queue(), ^{
-                UIWindow *window = [[UIApplication sharedApplication].windows firstObject];
-                [window.rootViewController presentViewController:alert animated:YES completion:nil];
-            });
-        }
+    if (![response isKindOfClass:[NSHTTPURLResponse class]]) {
+        return;
     }
+    NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+    if (httpResponse.allHeaderFields[@"warning"] == nil) {
+        return;
+    }
+    NSString *warningMessage = (NSString *) httpResponse.allHeaderFields[@"warning"];
+    UIAlertController * alert = [UIAlertController alertControllerWithTitle : @"Warning"
+                                                                    message : warningMessage
+                                                             preferredStyle : UIAlertControllerStyleAlert];
+    UIAlertAction * dismiss = [UIAlertAction
+                               actionWithTitle:@"Dismiss"
+                               style:UIAlertActionStyleDefault
+                               handler:^(UIAlertAction * action)
+                               { }];
+    
+    [alert addAction:dismiss];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIWindow *window = [[UIApplication sharedApplication].windows firstObject];
+        [window.rootViewController presentViewController:alert animated:YES completion:nil];
+    });
 }
 
 @end
