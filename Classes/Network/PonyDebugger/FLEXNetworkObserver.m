@@ -47,6 +47,7 @@ typedef void (^NSURLSessionAsyncCompletion)(id fileURLOrData, NSURLResponse *res
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error delegate:(id <NSURLConnectionDelegate>)delegate;
 
 - (void)connectionWillCancel:(NSURLConnection *)connection;
+- (void)showToastForResponseWarningHeaderField: (NSURLResponse *)response;
 
 @end
 
@@ -948,7 +949,7 @@ static char const * const kFLEXRequestIDKey = "kFLEXRequestIDKey";
             dataAccumulator = [[NSMutableData alloc] initWithCapacity:(NSUInteger)response.expectedContentLength];
         }
         requestState.dataAccumulator = dataAccumulator;
-
+        [self showToastForResponseWarningHeaderField:response];
         [[FLEXNetworkRecorder defaultRecorder] recordResponseReceivedWithRequestID:requestID response:response];
     }];
 }
@@ -1030,7 +1031,7 @@ static char const * const kFLEXRequestIDKey = "kFLEXRequestIDKey";
 
         NSString *requestMechanism = [NSString stringWithFormat:@"NSURLSessionDataTask (delegate: %@)", [delegate class]];
         [[FLEXNetworkRecorder defaultRecorder] recordMechanism:requestMechanism forRequestID:requestID];
-
+        [self showToastForResponseWarningHeaderField:response];
         [[FLEXNetworkRecorder defaultRecorder] recordResponseReceivedWithRequestID:requestID response:response];
     }];
 }
@@ -1117,6 +1118,35 @@ static char const * const kFLEXRequestIDKey = "kFLEXRequestIDKey";
             [[FLEXNetworkRecorder defaultRecorder] recordRequestWillBeSentWithRequestID:requestID request:task.currentRequest redirectResponse:nil];
         }
     }];
+}
+
+- (void)showToastForResponseWarningHeaderField: (NSURLResponse *)response
+{
+    if (![response isKindOfClass:[NSHTTPURLResponse class]]) {
+        return;
+    }
+    NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+    NSString *warningMessage = (NSString *) httpResponse.allHeaderFields[@"warning"];
+    if (warningMessage == nil) {
+        return;
+    }
+    UIAlertController * alert = [UIAlertController alertControllerWithTitle : @"Warning"
+                                                                    message : warningMessage
+                                                             preferredStyle : UIAlertControllerStyleAlert];
+    UIAlertAction * dismiss = [UIAlertAction
+                               actionWithTitle:@"Dismiss"
+                               style:UIAlertActionStyleDefault
+                               handler:^(UIAlertAction * action)
+                               { }];
+    
+    [alert addAction:dismiss];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIViewController *topController = [UIApplication sharedApplication].keyWindow.rootViewController;
+        if (topController.presentedViewController) {
+            topController = topController.presentedViewController;
+        }
+        [topController presentViewController:alert animated:YES completion:nil];
+    });
 }
 
 @end
